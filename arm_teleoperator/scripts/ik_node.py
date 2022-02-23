@@ -45,6 +45,7 @@ class IKNode:
         self.joint7_pub.publish(joints[6]*180/pi)
 
         rospy.loginfo("Published joint commands %s", success)
+        rospy.loginfo([x, y, z, R, P, Y])
         rospy.loginfo(self.kinova_ik.get_link_pose())
 
 if __name__ == "__main__":

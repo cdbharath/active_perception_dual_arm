@@ -1,6 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
-from torch import uint8
 import rospy
 import cv2
 from cv_bridge import CvBridge
@@ -33,5 +32,4 @@ if __name__ == "__main__":
 
     rospy.Subscriber("main_cam/color/image_raw/compressed", CompressedImage, image_publisher_cb)
     image_pub = rospy.Publisher("main_cam/brightness_corrected", Image, queue_size=10)
-    # rospy.Timer(rospy.Duration(0.1), image_publisher_cb)
     rospy.spin()
