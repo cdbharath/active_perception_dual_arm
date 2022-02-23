@@ -22,7 +22,7 @@ class IKNode:
         self.joint6_pub = rospy.Publisher("/left_arm_joint_6_position_controller/command", Float64, queue_size=10)
         self.joint7_pub = rospy.Publisher("/left_arm_joint_7_position_controller/command", Float64, queue_size=10)
 
-        rospy.Subscriber("eef/pose", TwistStamped, ik_cb)
+        rospy.Subscriber("eef/pose", TwistStamped, self.ik_cb)
 
     def ik_cb(self, data):
         x = data.twist.linear.x
@@ -33,16 +33,19 @@ class IKNode:
         P = data.twist.angular.y
         Y = data.twist.angular.z
 
-        success, joints = self.kinova_ik.solve_ik([0.5, 0.0, 0.00], 
-                                         quaternion_from_euler(pi/2, 0, pi/2).tolist())
+        success, joints = self.kinova_ik.solve_ik([x, y, z], 
+                                         quaternion_from_euler(R, P, Y).tolist())
 
-        self.joint1_pub.publish(joints[0])
-        self.joint2_pub.publish(joints[1])
-        self.joint3_pub.publish(joints[2])
-        self.joint4_pub.publish(joints[3])
-        self.joint5_pub.publish(joints[4])
-        self.joint6_pub.publish(joints[5])
-        self.joint7_pub.publish(joints[6])
+        self.joint1_pub.publish(joints[0]*180/pi)
+        self.joint2_pub.publish(joints[1]*180/pi)
+        self.joint3_pub.publish(joints[2]*180/pi)
+        self.joint4_pub.publish(joints[3]*180/pi)
+        self.joint5_pub.publish(joints[4]*180/pi)
+        self.joint6_pub.publish(joints[5]*180/pi)
+        self.joint7_pub.publish(joints[6]*180/pi)
+
+        rospy.loginfo("Published joint commands %s", success)
+        rospy.loginfo(self.kinova_ik.get_link_pose())
 
 if __name__ == "__main__":
     rospy.init_node("kinova_ik")
@@ -55,3 +58,5 @@ if __name__ == "__main__":
 
     # kinova_ik.visualize()
     # print(kinova_ik.get_link_pose())
+
+    rospy.spin()
