@@ -164,14 +164,12 @@ if __name__ == "__main__":
     kinova_ik = KinovaGen3IK()
 
     # point ik
-    # print(kinova_ik.solve_ik([0.4, 0.2, 0.3])) # without rotation
-    # kinova_ik.visualize()
+    print(kinova_ik.solve_ik([0.4, 0.2, 0.3])) # without rotation
+    kinova_ik.visualize()
     # fixed ik
-    # print(kinova_ik.solve_ik([0.4, 0.2, 0.3], 
-    #                          [0, np.sqrt(2)/2, np.sqrt(2)/2, 0])) #quaternion
-    # print(kinova_ik.solve_ik([0.4, 0.2, 0.3], 
-    #                          [np.pi, 0, np.pi/2])) #zyx
-    print(kinova_ik.solve_ik([0.0, 0.0, 1.00], 
-                             [0, 0, 0])) #zyx
+    print(kinova_ik.solve_ik([0.4, 0.2, 0.3], 
+                             [0, np.sqrt(2)/2, np.sqrt(2)/2, 0])) #quaternion
+    print(kinova_ik.solve_ik([0.4, 0.2, 0.3], 
+                             [np.pi, 0, np.pi/2])) #zyx
 
     kinova_ik.visualize()
