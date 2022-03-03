@@ -54,8 +54,8 @@ if __name__ == "__main__":
     IKNode()
 
     # kinova_ik = KinovaGen3IK()
-    # print(kinova_ik.solve_ik([0.5, 0.0, 0.00], 
-    #                         quaternion_from_euler(pi/2, 0, pi/2).tolist())) #zyx
+    # print(kinova_ik.solve_ik([1.0, 0.0, 0.00], 
+    #                         quaternion_from_euler(0, pi/2, 0).tolist())) #zyx
 
     # kinova_ik.visualize()
     # print(kinova_ik.get_link_pose())

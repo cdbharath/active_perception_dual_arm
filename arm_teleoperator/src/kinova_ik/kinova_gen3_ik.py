@@ -158,6 +158,9 @@ class KinovaGen3IK():
         array = array - 2*np.pi * np.floor((array+np.pi)/(2*np.pi))
         return array.tolist()
 
+    def forward_kinematics(self, angles):
+        self.set_angles(angles)
+        return self.get_link_pose()
 
 # Test class
 if __name__ == "__main__":
