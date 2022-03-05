@@ -25,6 +25,10 @@ Angular motion:
     pitch (theta): p (+1) o (-1)
     yaw (psi)    : i (+1) k (-1)
     roll (phi)   : r (+1) t (-1) 
+    
+Resolution: 
+    increase b
+    decrease n
 
 anything else : stop
 
@@ -34,23 +38,23 @@ CTRL-C to quit
 
 moveBindings = {
     
-        'x':(1, 0, 0, 0, 0, 0),
-        'c':(-1, 0, 0, 0, 0, 0),
-        'y':(0, 1, 0, 0, 0, 0),
-        'u':(0, -1, 0, 0, 0, 0),
-        'z':(0, 0, 1, 0, 0, 0),
-        'a':(0, 0, -1, 0, 0, 0),
-        'p':(0, 0, 0, 1, 0, 0),
-        'o':(0, 0, 0, -1, 0, 0),
-        'i':(0, 0, 0, 0, 1, 0),
-        'k':(0, 0, 0, 0, -1, 0),
-        'r':(0, 0, 0, 0, 0, 1),
-        't':(0, 0, 0, 0, 0, -1),
+        'x':(1, 0, 0, 0, 0, 0, 0),
+        'c':(-1, 0, 0, 0, 0, 0, 0),
+        'y':(0, 1, 0, 0, 0, 0, 0),
+        'u':(0, -1, 0, 0, 0, 0, 0),
+        'z':(0, 0, 1, 0, 0, 0, 0),
+        'a':(0, 0, -1, 0, 0, 0, 0),
+        'p':(0, 0, 0, 1, 0, 0, 0),
+        'o':(0, 0, 0, -1, 0, 0, 0),
+        'i':(0, 0, 0, 0, 1, 0, 0),
+        'k':(0, 0, 0, 0, -1, 0, 0),
+        'r':(0, 0, 0, 0, 0, 1, 0),
+        't':(0, 0, 0, 0, 0, -1, 0),
+        'b':(0, 0, 0, 0, 0, 0, -1),
+        'n':(0, 0, 0, 0, 0, 0, 1),
         
 
     }
-
-
 
 class PublishThread(threading.Thread):
     def __init__(self, rate):
@@ -62,6 +66,9 @@ class PublishThread(threading.Thread):
         self.theta = 0.0
         self.psi = 0.0
         self.phi = 0.0
+        self.res = 0.0
+        self.resol = 0.05 # selects the resolution for operation
+        self.resolution = 0
        
         self.condition = threading.Condition()
         self.done = False
@@ -86,7 +93,7 @@ class PublishThread(threading.Thread):
         if rospy.is_shutdown():
             raise Exception("Got shutdown request before subscribers connected")
 
-    def update(self, x, y, z, theta, psi, phi):
+    def update(self, x, y, z, theta, psi, phi, res):
         self.condition.acquire()
         self.x = x
         self.y = y
@@ -94,6 +101,7 @@ class PublishThread(threading.Thread):
         self.theta = theta
         self.psi = psi
         self.phi = phi
+        self.res = res
         
         # Notify publish thread that we have a new message.
         self.condition.notify()
@@ -101,14 +109,11 @@ class PublishThread(threading.Thread):
 
     def stop(self):
         self.done = True
-        self.update(0, 0, 0, 0, 0, 0)
+        self.update(0, 0, 0, 0, 0, 0, 0)
         self.join()
 
     def run(self):
         cmd = TwistStamped()
-        
-        # Insert the subcriber functionality to accuqire the current pose of the end-effector
-        # Now I am initializing randomanly
         
         current_x = 3
         current_y = 3
@@ -116,6 +121,7 @@ class PublishThread(threading.Thread):
         current_theta = 13
         current_psi = 3
         current_phi = 3
+        
         
         while not self.done:
             self.condition.acquire()
@@ -125,23 +131,32 @@ class PublishThread(threading.Thread):
             # Header definition
             cmd.header.stamp = rospy.Time.now()
             
+            
+            if (self.res == 0):
+                pass
+                # t = self.resolution
+            else:
+                self.resolution = self.resolution + (self.res * self.resol)
+                # self.resolution = t
+                
+            print(self.resolution)
             # Copy state into twist message.
-            cmd.twist.linear.x = self.x + current_x
+            cmd.twist.linear.x = (self.x * self.resolution) + current_x
             current_x = cmd.twist.linear.x
             
-            cmd.twist.linear.y = self.y + current_y
+            cmd.twist.linear.y = (self.y * self.resolution) + current_y
             current_y = cmd.twist.linear.y
             
-            cmd.twist.linear.z = self.z + current_z
+            cmd.twist.linear.z = (self.z * self.resolution) + current_z
             current_z = cmd.twist.linear.z
             
-            cmd.twist.angular.x = self.theta + current_theta
+            cmd.twist.angular.x = (self.theta * self.resolution) + current_theta
             current_theta = cmd.twist.angular.x 
             
-            cmd.twist.angular.y = self.psi + current_psi
+            cmd.twist.angular.y = (self.psi * self.resolution) + current_psi
             current_psi = cmd.twist.angular.y
             
-            cmd.twist.angular.z = self.phi + current_phi
+            cmd.twist.angular.z = (self.phi * self.resolution) + current_phi
             current_phi = cmd.twist.angular.z
             
             self.condition.release()
@@ -170,15 +185,12 @@ def getKey(key_timeout):
     return key
 
 
-
-
 if __name__=="__main__":
+    
     settings = termios.tcgetattr(sys.stdin)
 
     rospy.init_node('teleop_twist_keyboard')
 
-    # speed = rospy.get_param("~speed", 0.5)
-    # turn = rospy.get_param("~turn", 1.0)
     repeat = rospy.get_param("~repeat_rate", 0.0)
     key_timeout = rospy.get_param("~key_timeout", 0.0)
     if key_timeout == 0.0:
@@ -186,31 +198,32 @@ if __name__=="__main__":
 
     pub_thread = PublishThread(repeat)
  
-    # current_x = 3   # to have the track of current x pos which we will obtain from fwd_kin
     x = 0
     y = 0
     z = 0
     theta = 0
     psi = 0
     phi = 0
+    res = 0
     
     status = 0
 
     try:
         pub_thread.wait_for_subscribers()
-        pub_thread.update(x, y, z, theta, psi, phi)
+        pub_thread.update(x, y, z, theta, psi, phi, res)
 
         print(msg)
         
         while(1):
             key = getKey(key_timeout)
             if key in moveBindings.keys():
-                x = moveBindings[key][0]
-                y = moveBindings[key][1]
-                z = moveBindings[key][2]
-                theta = moveBindings[key][3]
-                psi = moveBindings[key][4]
-                phi = moveBindings[key][5]
+                x =     (moveBindings[key][0]) 
+                y =     (moveBindings[key][1]) 
+                z =     (moveBindings[key][2]) 
+                theta = (moveBindings[key][3]) 
+                psi =   (moveBindings[key][4]) 
+                phi =   (moveBindings[key][5]) 
+                res =   (moveBindings[key][6])
             else:
                 # Skip updating cmd_vel if key timeout and robot already
                 # stopped.
@@ -222,10 +235,11 @@ if __name__=="__main__":
                 theta = 0
                 psi = 0
                 phi = 0
+                res = 0
                 if (key == '\x03'):
                     break
  
-            pub_thread.update(x, y, z, theta, psi, phi)
+            pub_thread.update(x, y, z, theta, psi, phi, res)
 
     except Exception as e:
         print(e)
