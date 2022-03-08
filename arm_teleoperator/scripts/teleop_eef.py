@@ -138,10 +138,10 @@ class PublishThread(threading.Thread):
 
             current_x = translation[0] + 0.13
             current_y = translation[1]
-            current_z = translation[2] + 0.03
-            current_theta = euler_angles[0]
-            current_psi = euler_angles[1]
-            current_phi = euler_angles[2]
+            current_z = translation[2] + 0.015
+            current_theta = 3.14 - euler_angles[2]
+            current_psi = -euler_angles[1] + 0.02
+            current_phi = euler_angles[0] + 0.01
 
             # Header definition
             cmd.header.stamp = rospy.Time.now()
