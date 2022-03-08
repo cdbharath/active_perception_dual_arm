@@ -6,6 +6,9 @@ import threading
 
 import roslib; roslib.load_manifest('teleop_twist_keyboard')
 import rospy
+import tf
+from tf.transformations import euler_from_quaternion
+import math
 
 from geometry_msgs.msg import Twist, TwistStamped
 import std_msgs.msg
@@ -17,17 +20,17 @@ msg = """
 Reading from the keyboard  and Publishing to Twist!
 ---------------------------
 Moving around:
-    x-axis:   x (+1)   c (-1)     
-    y-axis:   y (+1)   u (-1)
-    z-axis:   z (+1)   a (-1)  
+    x-axis:   w (+1)   s (-1)     
+    y-axis:   a (+1)   d (-1)
+    z-axis:   q (+1)   z (-1)  
     
 Angular motion:
-    pitch (theta): p (+1) o (-1)
-    yaw (psi)    : i (+1) k (-1)
-    roll (phi)   : r (+1) t (-1) 
+    pitch (theta): i (+1) k (-1)
+    yaw (psi)    : j (+1) l (-1)
+    roll (phi)   : u (+1) n (-1) 
     
 Resolution: 
-    increase b
+    increase m
     decrease n
 
 anything else : stop
@@ -38,20 +41,20 @@ CTRL-C to quit
 
 moveBindings = {
     
-        'x':(1, 0, 0, 0, 0, 0, 0),
-        'c':(-1, 0, 0, 0, 0, 0, 0),
-        'y':(0, 1, 0, 0, 0, 0, 0),
-        'u':(0, -1, 0, 0, 0, 0, 0),
-        'z':(0, 0, 1, 0, 0, 0, 0),
-        'a':(0, 0, -1, 0, 0, 0, 0),
-        'p':(0, 0, 0, 1, 0, 0, 0),
-        'o':(0, 0, 0, -1, 0, 0, 0),
-        'i':(0, 0, 0, 0, 1, 0, 0),
-        'k':(0, 0, 0, 0, -1, 0, 0),
-        'r':(0, 0, 0, 0, 0, 1, 0),
-        't':(0, 0, 0, 0, 0, -1, 0),
-        'b':(0, 0, 0, 0, 0, 0, -1),
-        'n':(0, 0, 0, 0, 0, 0, 1),
+        'w':(1, 0, 0, 0, 0, 0, 0),
+        's':(-1, 0, 0, 0, 0, 0, 0),
+        'a':(0, 1, 0, 0, 0, 0, 0),
+        'd':(0, -1, 0, 0, 0, 0, 0),
+        'q':(0, 0, 1, 0, 0, 0, 0),
+        'z':(0, 0, -1, 0, 0, 0, 0),
+        'i':(0, 0, 0, 1, 0, 0, 0),
+        'k':(0, 0, 0, -1, 0, 0, 0),
+        'j':(0, 0, 0, 0, 1, 0, 0),
+        'l':(0, 0, 0, 0, -1, 0, 0),
+        'u':(0, 0, 0, 0, 0, 1, 0),
+        'n':(0, 0, 0, 0, 0, -1, 0),
+        'n':(0, 0, 0, 0, 0, 0, -1),
+        'm':(0, 0, 0, 0, 0, 0, 1),
         
 
     }
@@ -68,7 +71,7 @@ class PublishThread(threading.Thread):
         self.phi = 0.0
         self.res = 0.0
         self.resol = 0.05 # selects the resolution for operation
-        self.resolution = 0
+        self.resolution = 0.1
        
         self.condition = threading.Condition()
         self.done = False
@@ -115,18 +118,30 @@ class PublishThread(threading.Thread):
     def run(self):
         cmd = TwistStamped()
         
-        current_x = 3
-        current_y = 3
-        current_z = 3
-        current_theta = 13
-        current_psi = 3
-        current_phi = 3
+        current_x = 0
+        current_y = 0
+        current_z = 0
+        current_theta = 0
+        current_psi = 0
+        current_phi = 0
         
-        
+        listener = tf.TransformListener()
+
         while not self.done:
             self.condition.acquire()
             # Wait for a new message or timeout.
             self.condition.wait(self.timeout)
+
+            (translation, rotation) = listener.lookupTransform('kinova/base_link', 'kinova/end_effector_link', rospy.Time(0))
+            euler_angles = euler_from_quaternion(rotation)
+            print(translation, euler_angles)
+
+            current_x = translation[0] + 0.13
+            current_y = translation[1]
+            current_z = translation[2] + 0.03
+            current_theta = euler_angles[0]
+            current_psi = euler_angles[1]
+            current_phi = euler_angles[2]
 
             # Header definition
             cmd.header.stamp = rospy.Time.now()
@@ -138,8 +153,9 @@ class PublishThread(threading.Thread):
             else:
                 self.resolution = self.resolution + (self.res * self.resol)
                 # self.resolution = t
-                
+            
             print(self.resolution)
+
             # Copy state into twist message.
             cmd.twist.linear.x = (self.x * self.resolution) + current_x
             current_x = cmd.twist.linear.x

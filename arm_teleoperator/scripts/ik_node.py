@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from kinova_ik.kinova_gen3_ik import KinovaGen3IK
-import rospy
 from math import pi
 
 import rospy
@@ -36,27 +35,16 @@ class IKNode:
         success, joints = self.kinova_ik.solve_ik([x, y, z], 
                                          quaternion_from_euler(R, P, Y).tolist())
 
+        # success, joints = self.kinova_ik.solve_ik([0.5, 0, 0.5], 
+        #                                  quaternion_from_euler(0, 1.57, 0).tolist())
+
         self.joint1_pub.publish(joints[0])
-        # print("joint 1")
-        # rospy.sleep(2)
         self.joint2_pub.publish(joints[1])
-        # print("joint 2")
-        # rospy.sleep(2)
         self.joint3_pub.publish(joints[2])
-        # print("joint 3")
-        # rospy.sleep(2)
         self.joint4_pub.publish(joints[3])
-        # print("joint 4")
-        # rospy.sleep(2)
         self.joint5_pub.publish(joints[4])
-        # print("joint 5")
-        # rospy.sleep(2)
         self.joint6_pub.publish(joints[5])
-        # print("joint 6")
-        # rospy.sleep(2)
         self.joint7_pub.publish(joints[6])
-        # print("joint 7")
-        # rospy.sleep(10)
 
 
         rospy.loginfo("Published joint commands %s", success)
