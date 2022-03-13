@@ -20,9 +20,9 @@ msg = """
 Reading from the keyboard  and Publishing to Twist!
 ---------------------------
 Moving around:
-    x-axis:   w (+1)   s (-1)     
-    y-axis:   a (+1)   d (-1)
-    z-axis:   q (+1)   z (-1)  
+    forward and backward:   w (+1)   s (-1)     
+    left and right:   a (+1)   d (-1)
+    up and down:   q (+1)   z (-1)  
     
 Angular motion:
     pitch (theta): i (+1) k (-1)
@@ -41,20 +41,20 @@ CTRL-C to quit
 
 moveBindings = {
     
-        'w':(1, 0, 0, 0, 0, 0, 0),
-        's':(-1, 0, 0, 0, 0, 0, 0),
-        'a':(0, 1, 0, 0, 0, 0, 0),
-        'd':(0, -1, 0, 0, 0, 0, 0),
-        'q':(0, 0, 1, 0, 0, 0, 0),
-        'z':(0, 0, -1, 0, 0, 0, 0),
+        's':(1, 0, 0, 0, 0, 0, 0),
+        'w':(-1, 0, 0, 0, 0, 0, 0),
+        'q':(0, 1, 0, 0, 0, 0, 0),
+        'z':(0, -1, 0, 0, 0, 0, 0),
+        'a':(0, 0, 1, 0, 0, 0, 0),
+        'd':(0, 0, -1, 0, 0, 0, 0),
         'i':(0, 0, 0, 1, 0, 0, 0),
         'k':(0, 0, 0, -1, 0, 0, 0),
-        'j':(0, 0, 0, 0, 1, 0, 0),
-        'l':(0, 0, 0, 0, -1, 0, 0),
-        'u':(0, 0, 0, 0, 0, 1, 0),
-        'n':(0, 0, 0, 0, 0, -1, 0),
-        'n':(0, 0, 0, 0, 0, 0, -1),
-        'm':(0, 0, 0, 0, 0, 0, 1),
+        'u':(0, 0, 0, 0, 1, 0, 0),
+        'n':(0, 0, 0, 0, -1, 0, 0),
+        'j':(0, 0, 0, 0, 0, 1, 0),
+        'l':(0, 0, 0, 0, 0, -1, 0),
+        '[':(0, 0, 0, 0, 0, 0, -1),
+        ']':(0, 0, 0, 0, 0, 0, 1),
         
 
     }
@@ -132,16 +132,24 @@ class PublishThread(threading.Thread):
             # Wait for a new message or timeout.
             self.condition.wait(self.timeout)
 
-            (translation, rotation) = listener.lookupTransform('kinova/base_link', 'kinova/end_effector_link', rospy.Time(0))
+            (translation, rotation) = listener.lookupTransform('gopher/left_arm_base_link', 'gopher/left_arm_tool_frame', rospy.Time(0))
             euler_angles = euler_from_quaternion(rotation)
             print(translation, euler_angles)
 
-            current_x = translation[0] + 0.13
+            # current_x = translation[0] + 0.13
+            # current_y = translation[1]
+            # current_z = translation[2] + 0.012
+            # current_theta = 3.14 - euler_angles[2]
+            # # current_psi = -euler_angles[1] + 0.01
+            # current_psi = -euler_angles[1]
+            # current_phi = euler_angles[0] + 0.01
+
+            current_x = translation[0]
             current_y = translation[1]
-            current_z = translation[2] + 0.015
+            current_z = translation[2]
             current_theta = 3.14 - euler_angles[2]
-            current_psi = -euler_angles[1] + 0.02
-            current_phi = euler_angles[0] + 0.01
+            current_psi = -euler_angles[1]
+            current_phi = euler_angles[0]
 
             # Header definition
             cmd.header.stamp = rospy.Time.now()
@@ -166,13 +174,13 @@ class PublishThread(threading.Thread):
             cmd.twist.linear.z = (self.z * self.resolution) + current_z
             current_z = cmd.twist.linear.z
             
-            cmd.twist.angular.x = (self.theta * self.resolution) + current_theta
+            cmd.twist.angular.x = (self.theta * self.resolution*2) + current_theta
             current_theta = cmd.twist.angular.x 
             
-            cmd.twist.angular.y = (self.psi * self.resolution) + current_psi
+            cmd.twist.angular.y = (self.psi * self.resolution*2) + current_psi
             current_psi = cmd.twist.angular.y
             
-            cmd.twist.angular.z = (self.phi * self.resolution) + current_phi
+            cmd.twist.angular.z = (self.phi * self.resolution*2) + current_phi
             current_phi = cmd.twist.angular.z
             
             self.condition.release()
