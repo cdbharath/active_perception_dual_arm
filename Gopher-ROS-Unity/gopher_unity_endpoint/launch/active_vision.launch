@@ -1,0 +1,26 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="tcp_ip" default="192.168.1.19"/>
+  <arg name="tcp_port" default="10000"/>
+
+  <arg name="robot_name" default="kinova"/>
+
+  <rosparam file="$(find ros_tcp_endpoint)/config/params.yaml" command="load"/>
+
+  <!-- Connection -->
+  <node name="server_endpoint" pkg="ros_tcp_endpoint" type="default_server_endpoint.py" 
+        args="--wait" output="screen" respawn="true">
+    <param name="tcp_ip" type="string" value="$(arg tcp_ip)"/>
+    <param name="tcp_port" type="int" value="$(arg tcp_port)"/>
+  </node>  
+
+  <!-- Transform compressed image to raw image in order to view it in Rviz
+  <node name="main_cam_republish" type="republish" pkg="image_transport" output="screen" 
+        args="compressed in:=/main_cam/color/image_raw raw out:=/main_cam/color/image_raw" />
+  <node name="right_arm_cam_republish" type="republish" pkg="image_transport" output="screen" 
+        args="compressed in:=/right_arm_cam/color/image_raw raw out:=/right_arm_cam/color/image_raw" />
+  <node name="left_arm_cam_republish" type="republish" pkg="image_transport" output="screen" 
+        args="compressed in:=/left_arm_cam/color/image_raw raw out:=/left_arm_cam/color/image_raw" />  -->
+
+</launch>
